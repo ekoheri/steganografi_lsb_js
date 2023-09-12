@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <title>Enkripsi Steganography - LSB</title>
+</head>
+<body>
+    <div class="container py-3">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">Rekamsiber - POLTEKAD</h2>
+                        <hr />
+                        <h5 class="card-title text-center">Steganography berbasis Least Significant Bit</h5>
+                        <hr />
+                        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="pills-navbar-tab" data-bs-toggle="pill" data-bs-target="#pills-navbar" type="button" role="tab" aria-controls="pills-navbar" aria-selected="true">Enkripsi</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pills-header-tab" data-bs-toggle="pill" data-bs-target="#pills-header" type="button" role="tab" aria-controls="pills-header" aria-selected="false">Deskripsi Gambar</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pills-website-tab" data-bs-toggle="pill" data-bs-target="#pills-website" type="button" role="tab" aria-controls="pills-website" aria-selected="false">Deskripsi Website</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="pills-tabContent">
+                            <div class="tab-pane fade show active" id="pills-navbar" role="tabpanel" aria-labelledby="pills-navbar-tab" tabindex="0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="txtEncPesanRahasia" class="form-label">Isi Pesan Rahasia</label>
+                                            <textarea class="form-control" id="txtEncPesanRahasia" rows="5"></textarea>
+                                        </div>
+            
+                                        <div class="mb-3">
+                                            <label for="fileEncGambarAsli" class="form-label">Pilih Gambar Asli (png)</label>
+                                            <input class="form-control" type="file" id="fileEncGambarAsli">
+                                        </div>
+            
+                                        <div class="mb-3">
+                                            <button class="btn btn-primary" id="btnEnkripsi">Proses Enkripsi</button>
+                                        </div>
+            
+                                        <div id="divHasilEnkripsi">
+                                            <div class="mb-3">
+                                                <label for="cvsEncGambarAsli" class="form-label" id="lblEncGambarAsli"></label>
+                                                <canvas id="cvsEncGambarAsli" class="form-control"></canvas>
+                                            </div>
+                
+                                            <div class="mb-3">
+                                                <label for="cvsEncGambarStegano" class="form-label" id="lblEncGambarStegano"></label>
+                                                <canvas id="cvsEncGambarStegano" class="form-control"></canvas>
+                                            </div>
+                
+                                            <div class="mb-3">
+                                                <button class="btn btn-primary" id="btnDownload">Download Gambar Rahasia</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- div tab-enkripsi -->
+                            <div class="tab-pane fade" id="pills-header" role="tabpanel" aria-labelledby="pills-header-tab" tabindex="0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="fileDecGambarSteganografi" class="form-label">Pilih Gambar Hasil Steganografi</label>
+                                            <input class="form-control" type="file" id="fileDecGambarSteganografi">
+                                        </div>
+                                        <div class="mb-3">
+                                            <button class="btn btn-primary" id="btnDeskripsi">Proses Deskripsi</button>
+                                        </div>
+                                        <div id="divPesanRahasia">
+                                            <div class="mb-3">
+                                                <label for="cvsDecGambarStegano" class="form-label" id="lblDecGambarStegano"></label>
+                                                <canvas id="cvsDecGambarStegano" class="form-control"></canvas>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="txtDecPesanRahasia" class="form-label">Pesan Rahasia</label>
+                                                <textarea class="form-control" id="txtDecPesanRahasia" rows="5"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- div tab-deskripsi-gambar -->
+                            <div class="tab-pane fade" id="pills-website" role="tabpanel" aria-labelledby="pills-website-tab" tabindex="0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="txtDecWebSteganografi" class="form-label">Isikan Alamat URL Website</label>
+                                            <input class="form-control" type="text" id="txtDecWebSteganografi">
+                                        </div>
+                                        <div class="mb-3">
+                                            <button class="btn btn-primary" id="btnDeskripsiWeb">Proses Deskripsi</button>
+                                        </div>
+                                        <div class="mb-3" id="divPesanDekripWeb">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- div tab-deskripsi-website -->
+                        </div> <!-- tab-content -->
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js" integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa" crossorigin="anonymous"></script>
+    <script src="js/stegano_lsb.min.js"></script>
+</body>
+</html>
