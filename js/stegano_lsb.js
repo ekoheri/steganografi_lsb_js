@@ -299,12 +299,18 @@ Steganografi_LSB = function() {
                 ctx.drawImage( img_temp, 0, 0);
 
                 try {
+                    var p1 = document.createElement('p');
                     var pesan = this.DekripLSB(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
-                    this.divPesanDekripWeb.appendChild(canvas);
+                    p1.appendChild(canvas);
+                    this.divPesanDekripWeb.appendChild(p1);
 
+                    var p2 = document.createElement('p');
                     txtArea = document.createElement("textarea");
+                    txtArea.rows = "5";
+                    txtArea.cols = "50";
                     txtArea.value = pesan;
-                    this.divPesanDekripWeb.appendChild(txtArea);
+                    p2.appendChild(txtArea);
+                    this.divPesanDekripWeb.appendChild(p2);
                 } catch (err) {
                     console.log('gambar tidak mengandung pesan rahasia');
                 }
