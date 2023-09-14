@@ -1,8 +1,8 @@
 ajax = function() {
+    this.ContainerLoading = null;
     this.sendRequest = function (method, url_target, data) {
         var url = url_target;
-        //const ContainerLoading = this.ContainerLoading;
-        //const ShowLoading = this.ShowLoading();
+        const ContainerLoading = this.ContainerLoading;
         return new Promise(function(resolve, reject){
             /* new instance dari object XMLHttpRequest */
             var http = new XMLHttpRequest();
@@ -11,12 +11,17 @@ ajax = function() {
             http.open(method, url);
 
             /* Set header */
-            http.setRequestHeader("Cache-Control", "no-cache");
+            // Jika web target di-upload di netlify, maka Cache-Control-nya harus dimatikan
+            //http.setRequestHeader("Cache-Control", "no-cache");
 
-            /* Event ketika memulai memuat data dari backend */
+            /* Event ketika mulai memuat data dari backend */
             http.onloadstart = function() {
-                //ContainerLoading.innerHTML = '';
-                //ContainerLoading.appendChild(ShowLoading);
+                ContainerLoading.hidden = false;
+            }
+
+            /* Event ketika selesai memuat data dari backend */
+            http.onloadend = function(){
+                ContainerLoading.hidden = true;
             }
 
             /* Event ketika berhasil mendapatlan data dari backend */
@@ -56,6 +61,7 @@ Steganografi_LSB = function() {
     this.txtDecWebSteganografi = document.getElementById('txtDecWebSteganografi');
     this.btnDeskripsiWeb = document.getElementById('btnDeskripsiWeb');
     this.divPesanDekripWeb = document.getElementById('divPesanDekripWeb');
+    this.divLoading = document.getElementById('divLoading');
 
     this.PesanTerisi = false;
     this.GambarEncTerisi = false;
@@ -67,6 +73,7 @@ Steganografi_LSB = function() {
         //this.btnEnkripsi
         this.divHasilEnkripsi.hidden = true;
         this.divPesanRahasia.hidden = true;
+        this.divLoading.hidden = true;
 
         this.txtEncPesanRahasia.addEventListener('keyup', function() {
             if(txtEncPesanRahasia.value != '')
@@ -272,7 +279,7 @@ Steganografi_LSB = function() {
     this.ProsesDeskripsiWeb = function() {
         // Request data element ke backend
         var Service = new ajax();
-
+        Service.ContainerLoading = this.divLoading;
         Service.sendRequest('get', this.txtDecWebSteganografi.value , null)
         .then(function(result){
             // Jika request berhasil, maka baca data element-nya
@@ -280,6 +287,7 @@ Steganografi_LSB = function() {
         }.bind(this))
         .catch(function(error){
             // Jika request gagal, maka tampilkan error-nya
+            alert('Ada kesalahan ketika mengakses URL '+this.txtDecWebSteganografi.value);
             console.log(error);
         });
     };
