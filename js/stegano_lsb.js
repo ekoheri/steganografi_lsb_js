@@ -42,6 +42,9 @@ ajax = function() {
 }//end ajax
 
 Steganografi_LSB = function() {
+    this.txtEncKunciRahasia = document.getElementById('txtEncKunciRahasia');
+    this.txtDecKunciRahasia = document.getElementById('txtDecKunciRahasia');
+    this.txtWebKunciRahasia = document.getElementById('txtWebKunciRahasia');
     this.txtEncPesanRahasia = document.getElementById('txtEncPesanRahasia');
     this.fileEncGambarAsli = document.getElementById('fileEncGambarAsli');
     this.cvsEncGambarAsli = document.getElementById('cvsEncGambarAsli');
@@ -131,7 +134,8 @@ Steganografi_LSB = function() {
         const ctxAsli = this.cvsEncGambarAsli.getContext("2d");
         const ctxSecret = this.cvsEncGambarStegano.getContext("2d");
 
-        const pesan = this.encodeUtf8(this.txtEncPesanRahasia.value, false);
+        let chiper = this.Vigenere_Encrypt(this.txtEncPesanRahasia.value, this.txtEncKunciRahasia.value);
+        const pesan = this.encodeUtf8(chiper, false);
 
         this.lblEncGambarAsli.innerHTML = 'Gambar Asli';
         this.lblEncGambarStegano.innerHTML = 'Gambar Steganografi';
@@ -228,8 +232,9 @@ Steganografi_LSB = function() {
                 ctx.drawImage( img, 0, 0);
 
                 var pesan = this.DekripLSB(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
-
-                this.txtDecPesanRahasia.value = pesan;
+                console.log(pesan);
+                let decrypt = this.Vigenere_Decrypt(pesan, this.txtDecKunciRahasia.value);
+                this.txtDecPesanRahasia.value = decrypt;
 
                 this.cvsDecGambarStegano.hidden = false;
                 this.divPesanRahasia.hidden = false;
@@ -309,6 +314,8 @@ Steganografi_LSB = function() {
                 try {
                     var p1 = document.createElement('p');
                     var pesan = this.DekripLSB(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
+                    let decrypt = this.Vigenere_Decrypt(pesan, this.txtWebKunciRahasia.value);
+                    
                     p1.appendChild(canvas);
                     this.divPesanDekripWeb.appendChild(p1);
 
@@ -316,7 +323,7 @@ Steganografi_LSB = function() {
                     txtArea = document.createElement("textarea");
                     txtArea.rows = "5";
                     txtArea.cols = "50";
-                    txtArea.value = pesan;
+                    txtArea.value = decrypt;
                     p2.appendChild(txtArea);
                     this.divPesanDekripWeb.appendChild(p2);
                 } catch (err) {
@@ -400,6 +407,58 @@ Steganografi_LSB = function() {
         anchor.href = this.cvsEncGambarStegano.toDataURL("image/png");
         anchor.download = "gambar_rahasia.png";
         anchor.click();
+    }
+
+    //vigenere
+    this.isLetter = function (str) {
+        return str.length === 1 && str.match(/[a-zA-Z]/i);
+    }
+
+    this.isUpperCase = function (character) {
+        if (character === character.toUpperCase()) {
+            return true;
+        }
+        if (character === character.toLowerCase()) {
+            return false;
+        }
+    }
+
+    this.Vigenere_Encrypt = function (message, key) {
+        let result = '';
+
+        for (let i = 0, j = 0; i < message.length; i++) {
+            const c = message.charAt(i);
+            if (this.isLetter(c)) {
+                if (this.isUpperCase(c)) {
+                    result += String.fromCharCode((c.charCodeAt(0) + key.toUpperCase().charCodeAt(j) - 2 * 65) % 26 + 65); // A: 65
+                } else {
+                    result += String.fromCharCode((c.charCodeAt(0) + key.toLowerCase().charCodeAt(j) - 2 * 97) % 26 + 97); // a: 97
+                }
+            } else {
+                result += c;
+            }
+            j = ++j % key.length;
+        }
+        return result
+    }
+
+    this.Vigenere_Decrypt = function (message, key) {
+        let result = '';
+        
+        for (let i = 0, j = 0; i < message.length; i++) {
+            const c = message.charAt(i);
+            if (this.isLetter(c)) {
+                if (this.isUpperCase(c)) {
+                    result += String.fromCharCode(90 - (25 - (c.charCodeAt(0) - key.toUpperCase().charCodeAt(j))) % 26);
+                } else {
+                    result += String.fromCharCode(122 - (25 - (c.charCodeAt(0) - key.toLowerCase().charCodeAt(j))) % 26);
+                }
+            } else {
+                result += c;
+            }
+            j = ++j % key.length;
+        }
+        return result;
     }
 }//end class
 

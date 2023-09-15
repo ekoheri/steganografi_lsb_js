@@ -32,6 +32,10 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="mb-3">
+                                            <label for="txtEncKunciRahasia" class="form-label">Kunci Rahasia</label>
+                                            <input class="form-control" type="text" id="txtEncKunciRahasia">
+                                        </div>
+                                        <div class="mb-3">
                                             <label for="txtEncPesanRahasia" class="form-label">Isi Pesan Rahasia</label>
                                             <textarea class="form-control" id="txtEncPesanRahasia" rows="5"></textarea>
                                         </div>
@@ -66,6 +70,10 @@
                             <div class="tab-pane fade" id="pills-header" role="tabpanel" aria-labelledby="pills-header-tab" tabindex="0">
                                 <div class="card">
                                     <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="txtDecKunciRahasia" class="form-label">Kunci Rahasia</label>
+                                            <input class="form-control" type="text" id="txtDecKunciRahasia">
+                                        </div>
                                         <div class="mb-3">
                                             <label for="fileDecGambarSteganografi" class="form-label">Pilih Gambar Hasil Steganografi</label>
                                             <input class="form-control" type="file" id="fileDecGambarSteganografi">
@@ -103,7 +111,11 @@
                                         </div>
                                         <hr />
                                         <div class="mb-3">
-                                            <p>3. Halaman website kamuflase itu bisa anda terjemahkan pesan rahasianya disini.</p>
+                                            <label for="txtWebKunciRahasia" class="form-label">Kunci Rahasia</label>
+                                            <input class="form-control" type="text" id="txtWebKunciRahasia">
+                                        </div>
+                                        <div class="mb-3">
+                                            <p>4. Halaman website kamuflase itu bisa anda terjemahkan pesan rahasianya disini.</p>
                                             <label for="txtDecWebSteganografi" class="form-label">Isikan Alamat URL Website Kamuflasenya disini</label>
                                             <input class="form-control" type="text" id="txtDecWebSteganografi">
                                         </div>
@@ -124,6 +136,6 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js" integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa" crossorigin="anonymous"></script>
-    <script src="js/stegano_lsb.min.js"></script>
+    <script src="js/stegano_lsb.js"></script>
 </body>
 </html>
