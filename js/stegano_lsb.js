@@ -410,6 +410,8 @@ Steganografi_LSB = function() {
     }
 
     //vigenere
+    // Source https://javascript.algorithmexamples.com/web/Ciphers/vigenereCipher.html
+    
     this.isLetter = function (str) {
         return str.length === 1 && str.match(/[a-zA-Z]/i);
     }
