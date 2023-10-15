@@ -32,8 +32,12 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="txtEncKunciRahasia" class="form-label">Kunci Rahasia</label>
-                                            <input class="form-control" type="text" id="txtEncKunciRahasia">
+                                            <label for="txtEncKunciPrivate" class="form-label">Kunci Private</label>
+                                            <input class="form-control" type="number" id="txtEncKunciPrivate">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="txtEncKunciPublic" class="form-label">Kunci Public</label>
+                                            <input class="form-control" type="text" id="txtEncKunciPublic">
                                         </div>
                                         <div class="mb-3">
                                             <label for="txtEncPesanRahasia" class="form-label">Isi Pesan Rahasia</label>
@@ -71,8 +75,12 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="txtDecKunciRahasia" class="form-label">Kunci Rahasia</label>
-                                            <input class="form-control" type="text" id="txtDecKunciRahasia">
+                                            <label for="txtDecKunciPublic" class="form-label">Kunci Public</label>
+                                            <input class="form-control" type="text" id="txtDecKunciPublic">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="txtDecKunciPrivate" class="form-label">Kunci Private</label>
+                                            <input class="form-control" type="text" id="txtDecKunciPrivate">
                                         </div>
                                         <div class="mb-3">
                                             <label for="fileDecGambarSteganografi" class="form-label">Pilih Gambar Hasil Steganografi</label>
@@ -136,6 +144,6 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.min.js" integrity="sha384-Rx+T1VzGupg4BHQYs2gCW9It+akI2MM/mndMCy36UVfodzcJcF0GGLxZIzObiEfa" crossorigin="anonymous"></script>
-    <script src="js/stegano_lsb.min.js"></script>
+    <script src="js/stegano_lsb.js"></script>
 </body>
 </html>
