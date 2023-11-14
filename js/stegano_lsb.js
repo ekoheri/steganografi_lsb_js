@@ -163,19 +163,16 @@ Handle_UI = function() {
         const ctxAsli = this.cvsEncGambarAsli.getContext("2d");
         const ctxSecret = this.cvsEncGambarStegano.getContext("2d");
 
-        //let chiper = this.vigenere.Encrypt(this.txtEncPesanRahasia.value, this.txtEncKunciRahasia.value);
-        //const pesan = this.stegano_lsb.encodeUtf8(chiper, false);
-
-        var kunci = this.encryptMD5.md5(this.txtEncKunciPrivate.value);
-        //console.log("MD5 : "+kunci);
+        /*var kunci = this.encryptMD5.md5(this.txtEncKunciPrivate.value);
         kunci = this.encryptSHA1.SHA1(kunci);
-        //console.log("SHA1 : "+kunci);
         const chiper_reverse = this.reverse.Encrypt(this.txtEncPesanRahasia.value);
         console.log("Reverse Encrypt : " + chiper_reverse);
         const chiper_vigenere = this.vigenere.Encrypt(chiper_reverse, kunci);
         console.log("Vigenere Encrypt : " + chiper_vigenere);
         const chiper_caesar = this.caesar.Encrypt(chiper_vigenere, kunci);
-        console.log("Caesar Encrypt : " + chiper_caesar);
+        console.log("Caesar Encrypt : " + chiper_caesar);*/
+
+        const chiper_caesar = this.txtEncPesanRahasia.value;
 
         this.lblEncGambarAsli.innerHTML = 'Gambar Asli';
         this.lblEncGambarStegano.innerHTML = 'Gambar Steganografi';
@@ -212,16 +209,14 @@ Handle_UI = function() {
                 ctx.canvas.height = img.height;
                 ctx.drawImage( img, 0, 0);
 
-                var chiper = this.stegano_lsb.Decrypt(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
-                //console.log(chiper);
+                /*var chiper = this.stegano_lsb.Decrypt(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
                 var kunci = this.encryptMD5.md5(this.txtDecKunciPrivate.value);
-                //console.log(kunci);
-                //console.log("MD5 : "+kunci);
                 kunci = this.encryptSHA1.SHA1(kunci);
-                //console.log("SHA1 : "+kunci);
                 let chiper_caesar = this.caesar.Decrypt(chiper, kunci);
                 let chiper_vigenere = this.vigenere.Decrypt(chiper_caesar , kunci);
-                let pesan = this.reverse.Decrypt(chiper_vigenere);
+                let pesan = this.reverse.Decrypt(chiper_vigenere);*/
+
+                let pesan = this.stegano_lsb.Decrypt(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
 
                 this.txtDecPesanRahasia.value = pesan;
 
@@ -296,6 +291,164 @@ Handle_UI = function() {
 
 }//end class
 
+Stego_LSB = function() {
+    this.Encrypt = function(gambar, secret_msg) {
+        var pesan = this.encodeUtf8(secret_msg);
+
+        var panjang_pesan = pesan.length * 4;
+
+        var panjang_header = 0;
+
+        if(panjang_pesan > 255) {
+            var hasil = panjang_pesan;
+            while(hasil >= 1) {
+                hasil = hasil - 255;
+                panjang_header += 1;
+            }
+        }
+        
+        var data_header = []
+        for(var i = 0; i < panjang_header; i++){
+            if(i < (panjang_header - 1))
+                data_header.push(255);
+            else
+                data_header.push(panjang_pesan - (255 * i));
+        }
+
+        for (var i = 0; i < panjang_header; i++) {
+            gambar.data[i] = data_header[i];
+        }
+
+        var index_pixel = panjang_header + 1;
+
+        for(var i = 0; i < panjang_pesan.length; i++) {
+            var asciiCode = pesan[ i ];
+            var first2bit = ( asciiCode & 0x03 ); // 0x03 = 3
+            var first4bitMiddle = ( asciiCode & 0x0C ) >> 2;
+            var first6bitMiddle = ( asciiCode & 0x30 ) >> 4;
+            var first8bitMiddle = ( asciiCode & 0xC0 ) >> 6;
+
+            gambar.data[ index_pixel ] = ( gambar.data[ index_pixel ] & 0xFC ) | first2bit; 
+            gambar.data[ index_pixel + 1] = ( gambar.data[ index_pixel + 1] & 0xFC ) | first4bitMiddle; 
+            gambar.data[ index_pixel + 2] = ( gambar.data[ index_pixel + 2] & 0xFC ) | first6bitMiddle; 
+            gambar.data[ index_pixel + 3] = ( gambar.data[ index_pixel + 3] & 0xFC ) | first8bitMiddle; 
+
+            index_pixel += 4;
+
+        }
+
+        return gambar;
+    }
+
+    this.Decrypt = function (gambar) {
+        var totalLength = 0;
+        var lastIndex;
+
+        for ( var b = 0, viewLength = gambar.data.length; b < viewLength; b++ ) {
+            if (gambar.data[ b ] == 255) {
+                totalLength += gambar.data[ b ];
+                if (gambar.data[ b + 1 ] < 255) {
+                    totalLength += gambar.data[ b + 1 ];
+                    lastIndex = b + 1;
+                    break;
+                }
+            } else {
+                totalLength += gambar.data[ b ];
+                lastIndex = b;
+                break;
+            }
+        }
+        console.log("Panjang pesan : "+ totalLength.toString());
+        console.log("Index terakhir :"+lastIndex.toString());
+        var secretLength = totalLength;
+        var newUint8Array = new Uint8Array( totalLength / 4 );
+        var j = 0;
+        for ( var i = ( lastIndex + 1 ); i < secretLength; i = i + 4 ) {
+            var aShift = ( gambar.data[ i ] & 3 );
+            var bShift = ( gambar.data[ i + 1 ] & 3 ) << 2;
+            var cShift = ( gambar.data[ i + 2 ] & 3 ) << 4;
+            var dShift = ( gambar.data[ i + 3 ] & 3 ) << 6;
+            var result = ( ( ( aShift | bShift) | cShift ) | dShift );
+            newUint8Array[ j ] = result;
+            j++;
+
+            console.log(j.toString()+" "+result.toString());
+        }
+        var result = this.decodeUtf8( newUint8Array );
+        return result;
+    }
+
+    this.encodeUtf8 = function(stringToEncode, insertBOM) {
+        stringToEncode = stringToEncode.replace(/\r\n/g,"\n");
+        var utftext = [];
+        if( insertBOM == true )  {
+            utftext[0]=  0xef;
+            utftext[1]=  0xbb;
+            utftext[2]=  0xbf;
+        }
+
+        for (var n = 0; n < stringToEncode.length; n++) {
+
+            var c = stringToEncode.charCodeAt(n);
+
+            if (c < 128) {
+                utftext[utftext.length]= c;
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext[utftext.length]= (c >> 6) | 192;
+                utftext[utftext.length]= (c & 63) | 128;
+            }
+            else {
+                utftext[utftext.length]= (c >> 12) | 224;
+                utftext[utftext.length]= ((c >> 6) & 63) | 128;
+                utftext[utftext.length]= (c & 63) | 128;
+            }
+
+        }
+        return utftext;  
+    };
+
+    this.decodeUtf8 = function(arrayBuffer) {
+        var result = "";
+        var i = 0;
+        var c = 0;
+        var c1 = 0;
+        var c2 = 0;
+    
+        var data = new Uint8Array(arrayBuffer);
+    
+        // If we have a BOM skip it
+        if (data.length >= 3 && data[0] === 0xef && data[1] === 0xBB && data[2] === 0xBF) {
+            i = 3;
+        }
+    
+        while (i < data.length) {
+            c = data[i];
+    
+            if (c < 128) {
+                result += String.fromCharCode(c);
+                i++;
+            } else if (c > 191 && c < 224) {
+                if (i + 1 >= data.length) {
+                    //throw "UTF-8 Decode failed. Two byte character was truncated.";
+                }
+                c2 = data[i + 1];
+                result += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            } else {
+                if (i + 2 >= data.length) {
+                    //throw "UTF-8 Decode failed. Multi byte character was truncated.";
+                }
+                c2 = data[i + 1];
+                c3 = data[i + 2];
+                result += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+        }
+        return result;
+    }
+}
+
 Steganografy_LSB = function() {
     this.Encrypt = function(gambar, secret_msg) {
         var index = 0;
@@ -303,7 +456,7 @@ Steganografy_LSB = function() {
         for( var i = 0, length = pesan.length; i < length; i++ ) {
             if ( i == 0 ) {
                 var secretLength = length * 4; 
-                //console.info( 'Secret Length(' + length + 'x4) : ' + secretLength );
+                console.info( 'Panjang Pesan(' + length + 'x 4) : ' + secretLength );
                 if ( secretLength > 255 ) {
                     var division = secretLength / 255;
                     if ( division % 1 === 0 ) {
@@ -314,36 +467,45 @@ Steganografy_LSB = function() {
                     }
                     else {
                         var firstPortion = division.toString().split(".")[ 0 ];
-                        var secondPortion = division.toString().split(".")[ 1 ];
                         for ( var k = 0; k < firstPortion; k++ ) {
                             gambar.data[ k ] = 255;
+                            console.log("index : "+ k +" : " + gambar.data[ k ])
                             index++;
                         }
                         var numberLeft = Math.round( ( division - firstPortion ) * 255 );
-                        //console.info( 'numberLeft : ' + numberLeft )
                         gambar.data[ k ] = numberLeft;
+                        console.log("index : "+ k +" : " + gambar.data[ k ])
                         index++;
                     }
                 } else {
                     gambar.data[ 0 ] = secretLength;
+                    console.log("index : "+ index +" : " + gambar.data[ 0 ])
                     index++;
                 }
-                //console.log( 'sss : ' + gambar.data[ 0 ] )
             }//end if
-            var asciiCode = pesan[ i ];
-            var first2bit = ( asciiCode & 0x03 ); // 0x03 = 3
-            var first4bitMiddle = ( asciiCode & 0x0C ) >> 2;
-            var first6bitMiddle = ( asciiCode & 0x30 ) >> 4;
-            var first8bitMiddle = ( asciiCode & 0xC0 ) >> 6;
+            //console.log(String.fromCharCode(pesan[i])+ " " + pesan[i].toString() + " = "+ gambar.data[ index] + " "+
+            //gambar.data[ index + 1] +" "+gambar.data[ index + 2]+ " "+gambar.data[ index + 3]);
 
-            gambar.data[ index ] = ( gambar.data[ index ] & 0xFC ) | first2bit; 
-            index++;
-            gambar.data[ index ] = ( gambar.data[ index ] & 0xFC ) | first4bitMiddle; 
-            index++;
-            gambar.data[ index ] = ( gambar.data[ index ] & 0xFC ) | first6bitMiddle; 
-            index++;
-            gambar.data[ index ] = ( gambar.data[ index ] & 0xFC ) | first8bitMiddle; 
-            index++;
+            var asciiCode = pesan[ i ];
+            var first2bit = ( asciiCode & 0x03 ) >> 0;// 0x03 = 3   eg 0111 0011 => 0000 0011
+            var first4bit = ( asciiCode & 0x0C ) >> 2;// 0x0C = 12  eg 0111 0011 => 0000 0000
+            var first6bit = ( asciiCode & 0x30 ) >> 4;// 0x30 = 48  eg 0111 0011 => 0011 0000
+            var first8bit = ( asciiCode & 0xC0 ) >> 6;// 0xC0 = 192 eg 0111 0011 => 0100 0000
+
+            //console.log(first2bit+" "+ first4bit+" "+ first6bit+" "+ first8bit);
+            //console.log(i + ' : ' + first4bit);
+            //console.log(i + ' : ' + first6bit);
+            //console.log(i + ' : ' + first8bit);
+
+            gambar.data[ index ]    = ( gambar.data[ index ] & 0xFC )    | first2bit; 
+            gambar.data[ index + 1] = ( gambar.data[ index + 1] & 0xFC ) | first4bit; 
+            gambar.data[ index + 2] = ( gambar.data[ index + 2] & 0xFC ) | first6bit; 
+            gambar.data[ index + 3] = ( gambar.data[ index + 3] & 0xFC ) | first8bit; 
+
+            //console.log(String.fromCharCode(pesan[i])+ " " + pesan[i].toString() + " = "+ gambar.data[ index] + " "+
+            //gambar.data[ index + 1] +" "+gambar.data[ index + 2]+ " "+gambar.data[ index + 3]);
+            index += 4;
+
         }//end for i
         return gambar;
     }//end Encrypt
@@ -367,15 +529,17 @@ Steganografy_LSB = function() {
             }
         }
         var secretLength = totalLength;
+        console.log(secretLength);
         var newUint8Array = new Uint8Array( totalLength / 4 );
         var j = 0;
         for ( var i = ( lastIndex + 1 ); i < secretLength; i = i + 4 ) {
-            var aShift = ( gambar.data[ i ] & 3 );
-            var bShift = ( gambar.data[ i + 1 ] & 3 ) << 2;
-            var cShift = ( gambar.data[ i + 2 ] & 3 ) << 4;
-            var dShift = ( gambar.data[ i + 3 ] & 3 ) << 6;
+            var aShift = ( gambar.data[ i ] & 0x03 ) << 0 ;
+            var bShift = ( gambar.data[ i + 1 ] & 0x03 ) << 2;
+            var cShift = ( gambar.data[ i + 2 ] & 0x03 ) << 4;
+            var dShift = ( gambar.data[ i + 3 ] & 0x03 ) << 6;
             var result = ( ( ( aShift | bShift) | cShift ) | dShift );
             newUint8Array[ j ] = result;
+            //console.log(String.fromCharCode(result)+" = "+aShift+" "+bShift+" "+cShift+" "+dShift + "="+result);
             j++;
         }
         var result = this.decodeUtf8( newUint8Array );

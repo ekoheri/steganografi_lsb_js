@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <p>Input Gambar Cover</p>
+    <p><input type="file" id="flCover" /></p>
+    <p>Input Pesan</p>
+    <p><textarea id="txtPesan"></textarea></p>
+    <p><button id="btnEncode">Encode</button></p>
+    <p><canvas id="cvsEncode"></canvas>
+    <p>Input Gambar Steganografy</p>
+    <p><input type="file" id="flSteganografy" /></p>
+    <p><button id="btnDecode">Decode</button></p>
+    <p><textarea id="txtDecode"></textarea></p>
+
+    <script lang="javascript">
+    //Source : https://medium.com/analytics-vidhya/shh-your-secret-is-safe-a-simple-guide-to-steganography-in-python-89116582277e
+    
+    function encode(text) {
+        let flCover = document.getElementById('flCover');
+        let file = flCover.files[0];
+        let reader = new FileReader();
+        
+        reader.onloadend = function() {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = function() {
+                let canvas = document.getElementById('cvsEncode');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                //Proses Encode
+                let data = text; 
+                let dataLength = (data.length).toString(2).padStart(32, '0');
+                let binData = dataLength + str2bin(data);
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let pixels = imageData.data;
+                let width = canvas.width;
+                let height = canvas.height;
+                let encodingCapacity = width * height * 3; 
+                let totalBits = 32 + binData.length; 
+                
+                if (totalBits > encodingCapacity) {
+                    console.error("Jumlah data terlalu besar untuk disisipkan ke gambar cover!"); 
+                    return;
+                }
+
+                let completed = false;
+                let modifiedBits = 0;
+                let dataIndex = 0;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    for (let j = 0; j < 3; j++) {
+                        if (dataIndex < binData.length) {
+                            let x = binData[dataIndex];
+                            if (x === '0' && pixels[i + j] % 2 === 1) { 
+                                pixels[i + j] -= 1; 
+                                modifiedBits += 1;
+                            } 
+                            else if (x === '1' && pixels[i + j] % 2 === 0) { 
+                                pixels[i + j] += 1;
+                                modifiedBits += 1;
+                            }
+                            dataIndex++;
+                        } else {
+                            completed = true;
+                            break;
+                        }
+                    }
+                    if (completed) {
+                        break;
+                    }
+                }
+                //akhir proses encode
+                
+                ctx.putImageData(imageData, 0, 0);
+                let outputImg = canvas.toDataURL('image/png');
+                let imgElement = new Image();
+                imgElement.src = outputImg;
+                imgElement.onload = function() {
+                    let downloadLink = document.createElement('a');
+                    downloadLink.href = outputImg;
+                    downloadLink.download = "gambar_rahasia.png";
+                    downloadLink.click();
+                };
+            };
+        };
+        reader.readAsDataURL( file );
+    }
+
+    function decode() {
+        let flSteganografy = document.getElementById('flSteganografy');
+        let file = flSteganografy.files[0];
+        let reader = new FileReader();
+        
+        reader.onloadend = function() {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = function() {
+            
+                //Proses Decode
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const pixels = imageData.data;
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                let result = '';
+                let extractedBits = 0;
+                let completed = false;
+                let numberOfBits = null;
+
+                for (let i = 0; i < height; i++) {
+                    for (let j = 0; j < width; j++) {
+                        for (let k = 0; k < 3; k++) {
+                            if (extractedBits < 32 && numberOfBits === null) {
+                                result += (pixels[i * width * 4 + j * 4 + k] % 2).toString();
+                                extractedBits++;
+                            } else if (numberOfBits === null) {
+                                numberOfBits = parseInt(result, 2) * 8;
+                                result = '';
+                                extractedBits = 0;
+                            } else if (extractedBits < numberOfBits) {
+                                result += (pixels[i * width * 4 + j * 4 + k] % 2).toString();
+                                extractedBits++;
+                            } else {
+                                completed = true;
+                                break;
+                            }
+                        }
+                        if (completed) {
+                            break;
+                        }
+                    }
+                    if (completed) {
+                        break;
+                    }
+                } //end for
+                txtDecode =  document.getElementById('txtDecode');
+                txtDecode.value = bin2str('0'+result.slice(0, -1));
+            };
+        }; 
+        reader.readAsDataURL( file );
+    }
+
+    //Fungsi untuk merubah string ke biner
+    function str2bin(string) {
+        return string.split('').map(function(char) {
+            return ('00000000' + char.charCodeAt(0).toString(2)).slice(-8);
+        }).join('');
+    }
+    
+    //Fungsi untuk merubah biner ke string
+    function bin2str(bin) {
+        const binaryString = bin.match(/.{1,8}/g);
+        const str = binaryString.map(function(byte) {
+            return String.fromCharCode(parseInt(byte, 2));
+        }).join('');
+        return str;
+    }
+
+
+    window.addEventListener('load', () => {
+        txtPesan = document.getElementById('txtPesan');
+        btnEncode = document.getElementById('btnEncode');
+        
+        btnEncode.addEventListener('click', function() {
+            const text = txtPesan.value;
+            encode(text);
+        });
+        
+        btnDecode.addEventListener('click', function() {
+            decode();
+        })
+    });
+    </script>
+</body>
+</html>

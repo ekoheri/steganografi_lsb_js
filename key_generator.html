@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Test Key</title>
+</head>
+<body>
+    <p><button id="btnGenerate">Generate</button></p>
+    <p>Private Key</p>
+    <p><input type="input" id="txtPrivateKey" /></p>
+    <p>Public Key</p>
+    <p><input type="input" id="txtPublicKey" /></p>
+
+    <script lang="javascript">
+        window.addEventListener('load', () => {
+            btnGenerate = document.getElementById('btnGenerate');
+            txtPrivateKey = document.getElementById('txtPrivateKey');
+            txtPublicKey = document.getElementById('txtPublicKey');
+
+            btnGenerate.addEventListener('click', function() {
+                var key = new Key_Generator();
+                key.GenerateKey();
+                txtPrivateKey.value = key.Private_Key;
+                txtPublicKey.value = key.Public_Key;
+            });
+        });
+
+        class Key_Generator {
+            #List_Sengkalan = [
+                ["Akasa", "Awang-Awang", "Barakan", "Brastha", "Byoma"],
+                ["Badan","Budha","Budi","Buweng","Candra"],
+                ["Apasang", "Asta", "Athi-athi", "Buja", "Bujana"],
+                ["Agni", "Api",  "Apyu", "Bahni", "Benter"],
+                ["Bun", "Catur", "Dadya", "Gawe", "Her"],
+                ["Angin", "Astra", "Bajra", "Bana", "Bayu"],
+                ["Amla", "Anggana", "Anggang-Anggang", "Amnggas", "Artati"],
+                ["Acala",  "Ajar",  "Angsa",  "Ardi",  "Arga"],
+                ["Anggusti", "Astha", "Bajul", "Basu", "Basuki"],
+                ["Ambuka", "Anggangsir", "Angleng", "Angrong", "Arum"]
+            ];
+
+            Private_Key = '';
+            Public_Key = '';
+
+            #OTP() {
+                var digits = '0123456789'; 
+                let passwd = ''; 
+                for (let i = 0; i < 4; i++ ) { 
+                    passwd += digits[Math.floor(Math.random() * 10)]; 
+                } 
+                return passwd;
+            }
+
+            #LCM(a, b) {
+                const gdc = (a, b) => {
+                    if (b == 0) return a;
+                    else return gdc(b,a % b);
+                }; 
+
+                return a * (b / gdc(a,b));
+            }
+
+            #CreateSengkalan(Origin_Key) {
+                var words = "";
+                for(var i = 0; i < Origin_Key.length; i++) {
+                    if(words == "")
+                        words = this.#List_Sengkalan[parseInt(Origin_Key.charAt(i))][Math.floor(Math.random() * 5)];
+                    else
+                        words += " "+this.#List_Sengkalan[parseInt(Origin_Key.charAt(i))][Math.floor(Math.random() * 5)];
+                }
+                return words;
+            }
+
+            #TranslateSengkalan(Sengkalan_string) {
+                var words = Sengkalan_string.split(" ");
+                var number = "";
+                for(var i = 0; i < words.length; i++) {
+                    var found = false;
+                    var rows = 0;
+                    while((found == false) && (rows < 10)) {
+                        var cols = 0;
+                        while((found == false) && (cols < 5)) {
+                            if(this.List_Sengkalan[rows][cols] == words[i]) 
+                                found = true;
+                            else
+                                cols++;
+                        }
+                        if(found == false)
+                            rows++;
+                    }
+                    if(found == true)
+                        number += rows.toString() ;
+                }
+                return number;
+            }
+
+            #LZWEncode(s) {
+                if (!s) return s;
+                var b64="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+                var d=new Map();
+                var s=unescape(encodeURIComponent(s)).split("");
+                var word=s[0];
+                var num=256;
+                var key;
+                var o=[];
+                function out(word,num) {
+                    key=word.length>1 ? d.get(word) : word.charCodeAt(0);
+                    o.push(b64[key&0x3f]);
+                    o.push(b64[(key>>6)&0x3f]);
+                    o.push(b64[(key>>12)&0x3f]);
+                }
+                for (var i=1; i<s.length; i++) {
+                    var c=s[i];
+                    if (d.has(word+c)) {
+                        word+=c;
+                    } else {
+                        d.set(word+c,num++);
+                        out(word,num);
+                        word=c;
+                        if(num==(1<<18)-1) {
+                            d.clear();
+                            num=256;
+                        }
+                    }
+                }
+                out(word);
+                return o.join("");
+            }
+
+            #LZWDecode(s) {
+                var b64="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+                var b64d={};
+                for(var i=0; i<64; i++){
+                    b64d[b64.charAt(i)]=i;
+                }
+                var d=new Map();
+                var num=256;
+                var word=String.fromCharCode(b64d[s[0]]+(b64d[s[1]]<<6)+(b64d[s[2]]<<12));
+                var prev=word;
+                var o=[word];
+                for(var i=3; i<s.length; i+=3) {
+                    var key=b64d[s[i]]+(b64d[s[i+1]]<<6)+(b64d[s[i+2]]<<12);
+                    word=key<256 ? String.fromCharCode(key) : d.has(key) ? d.get(key) : word+word.charAt(0);
+                    o.push(word);
+                    d.set(num++, prev+word.charAt(0));
+                    prev=word;
+                    if(num==(1<<18)-1) {
+                        d.clear();
+                        num=256;
+                    }
+                }
+                return decodeURIComponent(escape(o.join("")));
+            }
+
+            GenerateKey() {
+                var originKey = this.#OTP();
+                var p = this.#LCM(4, parseInt(originKey)).toString();
+                if(p.length < 4 )
+                    p = p.padStart(4, '0');
+                this.Private_Key = p;
+
+                var sengkalan_string = this.#CreateSengkalan(originKey);
+                this.Public_Key = this.#LZWEncode(sengkalan_string);
+            }
+        }
+    </script>
+</body>
+</html>

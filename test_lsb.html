@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSB</title>
+</head>
+<body>
+    <p>Input Gambar Cover</p>
+    <p><input type="file" id="flCover" /></p>
+    <p>Input Pesan</p>
+    <p><textarea id="txtPesan"></textarea></p>
+    <p><button id="btnEncode">Encode</button></p>
+    <p><canvas id="cvsEncode"></canvas>
+    <p>Input Gambar Steganografy</p>
+    <p><input type="file" id="flSteganografy" /></p>
+    <p><button id="btnDecode">Decode</button></p>
+    <p><textarea id="txtDecode"></textarea></p>
+
+    <script lang="javascript">
+    class LSB {
+        #str2bin(string) {
+            return string.split('').map(function(char) {
+                return ('00000000' + char.charCodeAt(0).toString(2)).slice(-8);
+            }).join('');
+        }
+
+        #bin2str(bin) {
+            const binaryString = bin.match(/.{1,8}/g);
+            const str = binaryString.map(function(byte) {
+                return String.fromCharCode(parseInt(byte, 2));
+            }).join('');
+            return str;
+        }
+        // Encoding part
+        Encode(img, msg) {
+            let data = msg; 
+            let dataLength = (data.length).toString(2).padStart(32, '0');
+            let binary_msg = dataLength + this.#str2bin(data);
+
+            console.log("Encoding : "+binary_msg);
+            
+            const imageData = img;
+            let width = imageData.width;
+            let height = imageData.height;
+            let encodingCapacity = width * height * 3; 
+            let totalBits = 32 + binary_msg.length; 
+            
+            if (totalBits > encodingCapacity) {
+                console.error("Jumlah data terlalu besar untuk disisipkan ke gambar cover!"); 
+                return;
+            }
+
+            //let awal = '';
+            //let akhir = '';
+            var index = 0;
+            for(var i = 0; i < binary_msg.length; i += 3) {
+                for(var rgb = 0; rgb < 3 ; rgb++) {
+                    //awal += imageData.data[index + rgb].toString()+' ';
+                    var bit = binary_msg[i + rgb];
+                    if((bit == '0') && (imageData.data[index + rgb] % 2 == 1)) {
+                        imageData.data[index + rgb] -= 1; 
+                    }
+                    else if ((bit == '1') && (imageData.data[index + rgb] % 2 == 0)) { 
+                        imageData.data[index + rgb] += 1;
+                    }
+                    //akhir += imageData.data[index + rgb].toString()+' ';
+                }
+                index += 4;
+            }
+            //console.log(awal);
+            //console.log(akhir);
+            return imageData;
+        }
+
+        // Decoding part
+        Decode(img) {
+            const imageData = img;
+            let result = '';
+            let extracted_bits = 0;
+            let number_of_bits = 0;       
+
+            let completed = false;
+            var index = 0;
+            while((index < imageData.data.length) && (completed == false)) {
+                for (let rgb = 0; rgb < 3; rgb++) {
+                    result += (imageData.data[index + rgb] % 2).toString();
+                    extracted_bits += 1;
+                    if ((extracted_bits == 32) && (number_of_bits == 0)) {
+                        number_of_bits = parseInt(result, 2) * 8;
+                        result = '';
+                        extracted_bits = 0;
+                    } else if ((extracted_bits == number_of_bits) && (number_of_bits > 0)){ 
+                        //console.log("Diekstrak :"+extracted_bits.toString());
+                        completed = true;
+                    }
+                }
+                index += 4;
+            }//end while
+            
+            return this.#bin2str(result);
+        }
+    }//end class
+
+    window.addEventListener('load', () => {
+        txtPesan = document.getElementById('txtPesan');
+        btnEncode = document.getElementById('btnEncode');
+        cvsEncode = document.getElementById('cvsEncode');
+        cvsEncode.hidden = true;
+        
+        btnEncode.addEventListener('click', function() {
+            ProsesEncode();
+            cvsEncode.hidden = false;
+        });
+        
+        btnDecode.addEventListener('click', function() {
+            ProsesDecode();
+        })
+    });
+
+    function ProsesEncode(){
+        const pesan = txtPesan.value;
+        const lsb = new LSB();
+        let flCover = document.getElementById('flCover');
+        let file = flCover.files[0];
+        let reader = new FileReader();
+        
+        reader.onloadend = function() {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = function() {
+                let canvas = document.getElementById('cvsEncode');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                lsb.Encode(imageData, pesan);
+
+                ctx.putImageData(imageData, 0, 0);
+                let outputImg = canvas.toDataURL('image/png');
+                let imgElement = new Image();
+                imgElement.src = outputImg;
+                imgElement.onload = function() {
+                    let downloadLink = document.createElement('a');
+                    downloadLink.href = outputImg;
+                    downloadLink.download = "gambar_rahasia.png";
+                    downloadLink.click();
+                };
+            };
+        };
+        reader.readAsDataURL( file );
+    } //end proses encode
+
+    function ProsesDecode(){
+        const lsb = new LSB();
+        let flSteganografy = document.getElementById('flSteganografy');
+        let file = flSteganografy.files[0];
+        let reader = new FileReader();
+        
+        reader.onloadend = function() {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                txtDecode =  document.getElementById('txtDecode');
+                txtDecode.value = lsb.Decode(imageData);
+            };
+        }; 
+        reader.readAsDataURL( file );
+    }//end proses decode
+    </script>
+</body>
+</html>
+
